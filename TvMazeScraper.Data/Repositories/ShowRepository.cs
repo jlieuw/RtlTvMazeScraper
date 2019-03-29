@@ -6,20 +6,20 @@ namespace TvMazeScraper.Data.Repositories
 {
     public class ShowRepository : IShowRepository
     {
-        private TvMazeScraperContext context;
-        public ShowRepository(TvMazeScraperContext _context)
+        private TvMazeScraperContext _context;
+        public ShowRepository(TvMazeScraperContext context)
         {
-            context = _context;
+            _context = context;
         }
 
         public void AddShows(IEnumerable<Show> Shows)
         {
-            context.Shows.AddRange(Shows);
+            _context.Shows.AddRange(Shows);
         }
 
         public ShowModel GetShowModel(int id)
         {
-            return context.Shows
+            return _context.Shows
                 .Select(s =>
                new ShowModel()
                {
@@ -29,12 +29,12 @@ namespace TvMazeScraper.Data.Repositories
                 .FirstOrDefault(s => s.Id == id);
         }
 
-        public IEnumerable<int> GetShowIds() => context.Shows.Select(s => s.Id).ToList();
+        public IEnumerable<int> GetShowIds() => _context.Shows.Select(s => s.Id).ToList();
 
 
         public IEnumerable<Show> GetShows(int page, int size)
         {
-            return context.Shows.Include(s => s.Cast)
+            return _context.Shows.Include(s => s.Cast)
                 .ThenInclude(sp => sp.Person)
                 .Skip(page * size)
                 .Take(size)
@@ -43,12 +43,12 @@ namespace TvMazeScraper.Data.Repositories
 
         public bool Save()
         {
-            return (context.SaveChanges() >= 0);
+            return (_context.SaveChanges() >= 0);
         }
 
         public IEnumerable<ShowModel> GetShowModels(int page, int size)
         {
-            return context.Shows
+            return _context.Shows
                 .Skip(page * size)
                 .Take(size)
                 .Select(s =>

@@ -11,7 +11,7 @@ namespace TvMazeScraper.Controllers
     [ApiController]
     public class ShowController : ControllerBase
     {
-        private IShowRepository _showRepository;
+        private readonly IShowRepository _showRepository;
 
         public ShowController(IShowRepository showRepository)
         {

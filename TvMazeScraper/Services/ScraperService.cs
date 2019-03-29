@@ -14,9 +14,9 @@ namespace TvMazeScraper.Services
         const string baseUrl = "http://api.tvmaze.com";
         const string showUrl = "/shows?page={0}";
         const string personUrl = "/shows/{0}/cast";
-        private IShowRepository showRepository;
-        private IPersonRepository personRepository;
-        private IShowPersonRepository showPersonRepository;
+        private readonly IShowRepository showRepository;
+        private readonly IPersonRepository personRepository;
+        private readonly IShowPersonRepository showPersonRepository;
 
         public ScraperService(IShowRepository showRepository, IPersonRepository personRepository, IShowPersonRepository showPersonRepository)
         {
@@ -37,7 +37,7 @@ namespace TvMazeScraper.Services
                     {
 
                         // TODO: Refactor code
-                        // TODO: Auto-retry mechanism
+                        // TODO: Auto-retry mechanism using HttpClient Factory in Startup
                         var response = client.GetAsync(string.Format(showUrl, page)).Result;
                         response.EnsureSuccessStatusCode();
 
@@ -51,7 +51,7 @@ namespace TvMazeScraper.Services
                             var stringCastResult = castresponse.Content.ReadAsStringAsync().Result;
                             var existingPersonsIds = personRepository.GetPersonIds();
                             var castItems = JsonConvert.DeserializeObject<IEnumerable<CastItem>>(stringCastResult);
-                            var persons = castItems.Select(ci => ci.Person);
+                            var persons = castItems.Select(ci => ci.Person).ToList();
                             var personsToAdd = persons.Where(s => !existingPersonsIds.Contains(s.Id)).GroupBy(p => p.Id).Select(x => x.First());
 
                             var existingShowsPersons = showPersonRepository.GetShowPersons();
