@@ -21,8 +21,8 @@ namespace TvMazeScraper.Services
         private readonly ILogger _logger;
         private readonly IHttpClientFactory _clientFactory;
 
-        public ScraperService(IShowRepository showRepository,
-            IPersonRepository personRepository,
+        public ScraperService(IShowRepository showRepository, 
+            IPersonRepository personRepository, 
             IShowPersonRepository showPersonRepository,
             ILogger<ScraperService> logger,
             IHttpClientFactory httpClientFactory)
@@ -44,6 +44,7 @@ namespace TvMazeScraper.Services
                 {
                     try
                     {
+
                         // TODO: Refactor code
                         var response = await client.GetAsync(string.Format(showUrl, page));
                         response.EnsureSuccessStatusCode();
@@ -72,9 +73,12 @@ namespace TvMazeScraper.Services
                         }
 
                     }
-                    catch (Exception ex)
+                    catch (HttpRequestException httpRequestException)
                     {
-                        _logger.LogError(ex.Message);
+                        break;
+                    }catch(Exception otherEx)
+                    {
+                        var x = otherEx.GetType();
                     }
                     page++;
                 }

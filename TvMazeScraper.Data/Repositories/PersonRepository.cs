@@ -6,22 +6,22 @@ namespace TvMazeScraper.Data.Repositories
 {
     public class PersonRepository : IPersonRepository
     {
-        private TvMazeScraperContext context;
-        public PersonRepository(TvMazeScraperContext _context)
+        private readonly TvMazeScraperContext _context;
+        public PersonRepository(TvMazeScraperContext context)
         {
-            context = _context;
+            _context = context;
         }
 
         public void AddPersons(IEnumerable<Person> Persons)
         {
-            context.Persons.AddRange(Persons);
+            _context.Persons.AddRange(Persons);
         }
 
-        public IEnumerable<int> GetPersonIds() => context.Persons.Select(p => p.Id).ToList();
+        public IEnumerable<int> GetPersonIds() => _context.Persons.Select(p => p.Id).ToList();
 
         public bool Save()
         {
-            return (context.SaveChanges() >= 0);
+            return (_context.SaveChanges() >= 0);
         }
     }
 }

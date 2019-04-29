@@ -1,6 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
+using System.Threading;
 
 namespace TvMazeScraper.Data.Repositories
 {
@@ -29,8 +31,10 @@ namespace TvMazeScraper.Data.Repositories
                 .FirstOrDefault(s => s.Id == id);
         }
 
-        public IEnumerable<int> GetShowIds() => _context.Shows.Select(s => s.Id).ToList();
-
+        public Task<List<int>> GetShowIdsAsync()
+        {
+            return _context.Shows.Select(s => s.Id).ToListAsync();
+        }
 
         public IEnumerable<Show> GetShows(int page, int size)
         {

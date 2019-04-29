@@ -5,25 +5,25 @@ namespace TvMazeScraper.Data.Repositories
 {
     public class ShowPersonRepository : IShowPersonRepository
     {
-        private TvMazeScraperContext context;
-        public ShowPersonRepository(TvMazeScraperContext _context)
+        private readonly TvMazeScraperContext _context;
+        public ShowPersonRepository(TvMazeScraperContext context)
         {
-            context = _context;
+            _context = context;
         }
 
         public void AddShowPersons(IEnumerable<ShowPerson> showPerson)
         {
-            context.ShowPerson.AddRange(showPerson);
+            _context.ShowPerson.AddRange(showPerson);
         }
 
         public IEnumerable<ShowPerson> GetShowPersons()
         {
-            return context.ShowPerson.ToList();
+            return _context.ShowPerson.ToList();
         }
 
         public bool Save()
         {
-            return (context.SaveChanges() >= 0);
+            return (_context.SaveChanges() >= 0);
         }
     }
 }

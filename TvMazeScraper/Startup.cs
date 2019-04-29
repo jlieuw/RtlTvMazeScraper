@@ -33,6 +33,12 @@ namespace TvMazeScraper
                 c.SwaggerDoc("v1", new Info { Title = "TvMazeScraper API", Version = "v1" });
             });
 
+            services
+                .AddHttpClient<IScraperService, ScraperService>()
+                .AddPolicyHandler(PolicyHandler.WaitAndRetry())
+                .AddPolicyHandler(PolicyHandler.Timeout());
+
+
             services.AddHostedService<TimedHostedService>();
             services.AddScoped<IShowRepository, ShowRepository>();
             services.AddScoped<IPersonRepository, PersonRepository>();
