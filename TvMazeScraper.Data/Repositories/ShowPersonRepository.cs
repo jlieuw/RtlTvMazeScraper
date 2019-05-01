@@ -1,5 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace TvMazeScraper.Data.Repositories
 {
@@ -16,10 +18,7 @@ namespace TvMazeScraper.Data.Repositories
             _context.ShowPerson.AddRange(showPerson);
         }
 
-        public IEnumerable<ShowPerson> GetShowPersons()
-        {
-            return _context.ShowPerson.ToList();
-        }
+        public async Task<List<ShowPerson>> GetShowPersonsAsync() => await _context.ShowPerson.ToListAsync();
 
         public bool Save()
         {

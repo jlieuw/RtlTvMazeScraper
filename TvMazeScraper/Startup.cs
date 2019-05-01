@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Swashbuckle.AspNetCore.Swagger;
+using System;
 using TvMazeScraper.Data;
 using TvMazeScraper.Data.Repositories;
 using TvMazeScraper.ScheduledServices;
@@ -34,7 +35,10 @@ namespace TvMazeScraper
             });
 
             services
-                .AddHttpClient<IScraperService, ScraperService>()
+                .AddHttpClient<IScraperService, ScraperService>(client =>
+                {
+                    client.BaseAddress = new Uri("http://api.tvmaze.com");
+                })
                 .AddPolicyHandler(PolicyHandler.WaitAndRetry())
                 .AddPolicyHandler(PolicyHandler.Timeout());
 
@@ -43,7 +47,6 @@ namespace TvMazeScraper
             services.AddScoped<IShowRepository, ShowRepository>();
             services.AddScoped<IPersonRepository, PersonRepository>();
             services.AddScoped<IShowPersonRepository, ShowPersonRepository>();
-            services.AddScoped<IScraperService, ScraperService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

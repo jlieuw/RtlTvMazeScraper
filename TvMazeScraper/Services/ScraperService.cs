@@ -19,76 +19,75 @@ namespace TvMazeScraper.Services
         private readonly IPersonRepository _personRepository;
         private readonly IShowPersonRepository _showPersonRepository;
         private readonly ILogger _logger;
-        private readonly IHttpClientFactory _clientFactory;
+        private readonly HttpClient _httpClient;
 
         public ScraperService(IShowRepository showRepository,
             IPersonRepository personRepository,
             IShowPersonRepository showPersonRepository,
             ILogger<ScraperService> logger,
-            IHttpClientFactory httpClientFactory)
+            HttpClient httpClient)
         {
             _showRepository = showRepository;
             _personRepository = personRepository;
             _showPersonRepository = showPersonRepository;
             _logger = logger;
-            _clientFactory = httpClientFactory;
+            _httpClient = httpClient;
         }
 
         public async Task StartScrapingAsync()
         {
-            using (var client = _clientFactory.CreateClient())
+            int page = 0;
+            while (true)
             {
-                int page = 0;
-                client.BaseAddress = new Uri(baseUrl);
-                while (true)
+                try
                 {
-                    try
+                    // TODO: Refactor code
+
+                    var shows = await ScrapeShowsAsync(page);
+                    _showRepository.AddShows(shows);
+                    foreach (Show show in shows)
                     {
-                        // TODO: Refactor code
-                        var response = await client.GetAsync(string.Format(showUrl, page));
-                        response.EnsureSuccessStatusCode();
+                        var persons = await ScrapCastAsync(show.Id);
+                        var existingPersonsIds = await _personRepository.GetPersonIdsAsync();
+                        var personsToAdd = persons.Where(s => !existingPersonsIds.Contains(s.Id)).GroupBy(p => p.Id).Select(x => x.First());
 
-                        var stringResult = await response.Content.ReadAsStringAsync();
-                        var existingShowIds = await _showRepository.GetShowIdsAsync();
-                        var shows = JsonConvert.DeserializeObject<IEnumerable<Show>>(stringResult).Where(s => !existingShowIds.Contains(s.Id));
-                        _showRepository.AddShows(shows);
-                        foreach (Show show in shows)
-                        {
-                            var castresponse = await client.GetAsync(string.Format(personUrl, show.Id));
-                            var stringCastResult = await castresponse.Content.ReadAsStringAsync();
-                            var existingPersonsIds = _personRepository.GetPersonIds();
-                            var castItems = JsonConvert.DeserializeObject<IEnumerable<CastItem>>(stringCastResult);
-                            var persons = castItems.Select(ci => ci.Person).ToList();
-                            var personsToAdd = persons.Where(s => !existingPersonsIds.Contains(s.Id)).GroupBy(p => p.Id).Select(x => x.First());
+                        var existingShowsPersons = await _showPersonRepository.GetShowPersonsAsync();
+                        var showPersons = persons.Select(p => new ShowPerson() { PersonId = p.Id, ShowId = show.Id })
+                            .Where(sp => !existingShowsPersons.Any(esp => esp.PersonId == sp.PersonId && esp.ShowId == sp.ShowId))
+                            .GroupBy(p => new { p.PersonId, p.ShowId }).Select(x => x.First());
 
-                            var existingShowsPersons = _showPersonRepository.GetShowPersons();
-                            var showPersons = persons.Select(p => new ShowPerson() { PersonId = p.Id, ShowId = show.Id })
-                                .Where(sp => !existingShowsPersons.Any(esp => esp.PersonId == sp.PersonId && esp.ShowId == sp.ShowId))
-                                .GroupBy(p => new { p.PersonId, p.ShowId }).Select(x => x.First());
-
-                            _personRepository.AddPersons(personsToAdd);
-                            _showPersonRepository.AddShowPersons(showPersons);
-                            _showRepository.Save();
-                        }
-
+                        _personRepository.AddPersons(personsToAdd);
+                        _showPersonRepository.AddShowPersons(showPersons);
+                        _showRepository.Save();
                     }
-                    catch (Exception ex)
-                    {
-                        _logger.LogError(ex.Message);
-                    }
-                    page++;
+
                 }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex.Message);
+                    break;
+                }
+                page++;
             }
-        }
-
-        public void ScrapeShows()
-        {
 
         }
 
-        public void ScrapePersons()
+        public async Task<IEnumerable<Show>> ScrapeShowsAsync(int page)
         {
+            var response = await _httpClient.GetAsync(string.Format(showUrl, page));
+            response.EnsureSuccessStatusCode();
 
+            var stringResult = await response.Content.ReadAsStringAsync();
+            var existingShowIds = await _showRepository.GetShowIdsAsync();
+            return JsonConvert.DeserializeObject<IEnumerable<Show>>(stringResult).Where(s => !existingShowIds.Contains(s.Id));
+        }
+
+        public async Task<IEnumerable<Person>> ScrapCastAsync(int showid)
+        {
+            var castresponse = await _httpClient.GetAsync(string.Format(personUrl, showid));
+            var stringCastResult = await castresponse.Content.ReadAsStringAsync();
+            var castItems = JsonConvert.DeserializeObject<IEnumerable<CastItem>>(stringCastResult);
+            return castItems.Select(ci => ci.Person).ToList();
         }
     }
 }
