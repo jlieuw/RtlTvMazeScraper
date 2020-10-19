@@ -46,7 +46,7 @@ namespace TvMazeScraper.Web.Services
 
                     await _context.Shows.AddRangeAsync(showsToImport).ConfigureAwait(false);
 
-                    foreach (var show in shows)
+                    foreach (var show in showsToImport)
                     {
                         var cast = await ScrapeCastAsync(show.Id).ConfigureAwait(false);
                         var existingPersonsIds = _context.Persons.Select(person => person.Id);
@@ -72,16 +72,16 @@ namespace TvMazeScraper.Web.Services
 
         private async Task<IEnumerable<Show>> ScrapeShowsAsync(int page)
         {
-            var response = await _httpClient.GetShows(page);
-            var stringResult = await response.Content.ReadAsStringAsync();
+            var response = await _httpClient.GetShows(page).ConfigureAwait(false);
+            var stringResult = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
             System.Diagnostics.Debug.WriteLine(stringResult);
             return JsonConvert.DeserializeObject<IEnumerable<Show>>(stringResult);
         }
 
         private async Task<IEnumerable<Person>> ScrapeCastAsync(int showid)
         {
-            var castresponse = await _httpClient.GetCast(showid);
-            var stringCastResult = await castresponse.Content.ReadAsStringAsync();
+            var castresponse = await _httpClient.GetCast(showid).ConfigureAwait(false);
+            var stringCastResult = await castresponse.Content.ReadAsStringAsync().ConfigureAwait(false);
             var castItems = JsonConvert.DeserializeObject<IEnumerable<CastDTO>>(stringCastResult);
             return castItems.Select(ci => ci.Person).ToList();
         }
